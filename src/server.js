@@ -1,12 +1,21 @@
 import Fastify from "fastify"
 import fastifyBasicAuth from "@fastify/basic-auth"
-
+import { readFile } from "fs/promises";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 const port = 3000;
 const authenticate = {realm: 'Westeros'}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const fastify = Fastify({
-    logger: true
+    logger: true,
+    http2: true,
+    https: {
+        key: await readFile(join(__dirname, "server.key")),
+        cert: await readFile(join(__dirname, "server.crt")),
+    },
 })
 
 fastify.register(fastifyBasicAuth, {
@@ -32,6 +41,18 @@ fastify.after(() => {
         handler: async (req, reply) => {
             return {
                 replique: 'Un Lannister paye toujours ses dettes !'
+            }
+        }
+    })
+})
+
+fastify.after(() => {
+    fastify.route({
+        method: 'GET',
+        url: '/autre',
+        handler: async (req, reply) => {
+            return {
+                replique: 'Et oui Jamy !'
             }
         }
     })
